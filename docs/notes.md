@@ -61,6 +61,15 @@ Things I don't need:
 
 Defined in clause 7, though it is not required that these be physically defined, rather there are just logical terms. 
 
+
+# LAN8720A 
+
+## Configuration
+
+PHY[0] = `1'b0` ? 
+MODE[2:0] = `3'b011` 
+nINTSEL = `1'b1` or floating, handled by wiring in the connector cage
+
 # Ressources
 
 - 802.3 IEEE spec
