@@ -88,8 +88,8 @@ tx_tt_buffer m_tx_delay(
 ); 
 
 // RX - pass though
-assign mac_rx_v_o = rx_v_i; // will fix async valid in mac
-assign mac_rx_o   = rx_i; 
+assign mac_rx_v_o   = rx_v_i; // will fix async valid in mac
+assign mac_rx_o     = rx_i; 
 assign mac_rx_err_o = rx_err_i;
 
 endmodule
