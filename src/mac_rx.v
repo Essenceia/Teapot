@@ -45,7 +45,8 @@ reg [2:0] fsm_q;
 reg err_q; 
 reg fwd_q; // forward packet to higher level, not filted out
 
-localparam BUF_W = $max(MAC_W,SFD_W);
+localparam BUF_W = $max(MAC_W,SFD_W,FCS_W);
+
 reg [BUF_W-1:0] buff_q;
 wire frame_start;
 
@@ -55,7 +56,14 @@ reg  [CNT_W-1:0] cnt_q; // shared counter
 wire dst_addr_match; 
 wire dst_addr_group; 
 
-wire type_vlan;  
+wire type_vlan; 
+wire vid_match;  
+
+reg       data_v_q; 
+reg [1:0] data_q;
+reg       data_start_q; 
+reg       data_err_q; 
+
 
 // fsm 
 always @(posedge clk) begin
@@ -73,8 +81,9 @@ always @(posedge clk) begin
 				DST_MAC     <= cnt_q == ADDR_CNT ? SRC_MAC: DST_MAC; 
 				SRC_MAC     <= cnt_q == ADDR_CNT ? PKT_TYPE: SRC_MAC;
 				PKT_TYPE    <= cnt_q == FRAME_TYPE_CNT ? type_vlan: VLAN: BODY;
-				VLAN        <= cnt_q == FRAME_TYPE_CNT ? 
-				// TODO  
+				VLAN        <= cnt_q == FRAME_TYPE_CNT ? BODY: VLAN; 
+				BODY        <= mac_v_i ? BODY: FCS; 
+				FCS         <= IDLE;  
 			endcase	
 		end
 	end
@@ -104,11 +113,30 @@ assign dst_addr_match = phy_mac_i == buff_q;
 assign dst_addr_group = buff_q[MAC_W-8];  
 
 assign type_vlan = buff_q[FRAME_TYPE_W-1:0] == TYPE_VLAN; 
+assign vid_match = buff_q[VID_W-1:0] == vid_i;
 
 // forward 
 always @(posedge clk) 
 	if ((fsm_q == DST_MAC) & (cnt_q == ADDR_CNT))
 		fwd_q <= dst_addr_group | dst_addr_match;
-	else ((fsm_q == VLAN) & 
+	else ((fsm_q == VLAN) & (cnt_q == FRAME_TYPE_CNT))
+		fwd_q <= fwd_q & vid_match
+
+// sticky error 
+always @(posedge clk) 
+	if (fsm_q == IDLE) 
+		err_q <= 1'b0; // IFG guaranties no back to back frames
+	else 
+		err_q <=  err_q | (mac_v_i & mac_err_i) | fcs_err; 
+
+// TODO FCS 
+
+// to higher level
+always @(posedge clk) begin
+	data_v_q     <= fsm_q == BODY & fwd_q; // TODO sync
+	data_start_q <= body_start_q;// TODO sync
+	data_err_q   <= err_q; // async error
+	data_q       <= buff_q[FCS_W+1:FCS_W];
+end
 
 endmodule
