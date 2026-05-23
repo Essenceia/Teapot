@@ -5,7 +5,7 @@ project:
   discord:      "essen__"      # Your discord username, for communication and automatically assigning you a Tapeout role (optional)
   description:  "FCC hold my beer."      # One line description of what your project does
   language:     "Verilog" # other examples include SystemVerilog, Amaranth, VHDL, etc
-  clock_hz:     0       # Clock frequency in Hz (or 0 if not applicable)
+  clock_hz:     50000000       # Clock frequency in Hz (or 0 if not applicable)
 
   # How many tiles your design occupies? A single tile is about 340x160 uM.
   tiles: "2x2"          # Valid values: 1x1, 1x2, 2x2, 3x2, 4x2, 3x4 or 4x4
@@ -27,30 +27,30 @@ pinout:
   ui[1]: ""
   ui[2]: ""
   ui[3]: ""
-  ui[4]: ""
-  ui[5]: ""
-  ui[6]: ""
-  ui[7]: ""
+  ui[4]: "mcu_tx_data[0]"
+  ui[5]: "mcu_tx_data[1]"
+  ui[6]: "mcu_tx_cmd[0]"
+  ui[7]: "mcu_tx_cmd[1]"
 
   # Outputs
-  uo[0]: ""
-  uo[1]: ""
-  uo[2]: ""
+  uo[0]: "phy_tx_data[0]"
+  uo[1]: "phy_tx_data[1]"
+  uo[2]: "phy_tx_v"
   uo[3]: ""
-  uo[4]: ""
-  uo[5]: ""
-  uo[6]: ""
-  uo[7]: ""
+  uo[4]: "mcu_rx_data[0]"
+  uo[5]: "mcu_rx_data[1]"
+  uo[6]: "mcu_rx_cmd[0]"
+  uo[7]: "mcu_rx_cmd[1]"
 
   # Bidirectional pins
-  uio[0]: ""
-  uio[1]: ""
-  uio[2]: ""
-  uio[3]: ""
+  uio[0]: "phy_rx_data[0]"
+  uio[1]: "phy_rx_data[1]"
+  uio[2]: "phy_rx_v"
+  uio[3]: "phy_rx_err"
   uio[4]: ""
   uio[5]: ""
   uio[6]: ""
-  uio[7]: ""
+  uio[7]: "phy_rst_n"
 
 # Do not change!
 yaml_version: 6

@@ -89,9 +89,12 @@ end
 tx_tt_buffer m_tx_delay(
 	.ref_clk(clk),
 	.rst_n(rst_n), 
+
 	.clk_phase_sel_i(clk_phase_sel_i),
+
 	.tx_v_i(mac_tx_v_q),
 	.tx_i(mac_tx_q),
+
 	.tx_v_o(tx_v_o),
 	.tx_o(tx_o)
 ); 
