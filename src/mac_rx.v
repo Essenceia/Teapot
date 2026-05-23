@@ -28,7 +28,7 @@ module mac_rx(
 	output [1:0] data_o,
 	output       data_err_o // drop ongoing packet on error
 ); 
-`include eth_defines.vh
+`include "src/eth_defines.vh"
 
 // fsm 
 localparam ERR        = 4'd0; 
@@ -77,17 +77,17 @@ always @(posedge clk) begin
 		// detect mac gap 
 		if (mac_v_i & mac_err_i) begin
 			fsm_q <= ERR;
-		else
+		end else begin
 			case(fsm_q)
-				ERR:  fsm_q <= IDLE; 
-				IDLE: fsm_q <= mac_v_i ? DETECT_SFD : IDLE;
-				DETECT_SFD  <= frame_start ? DST_MAC: DETECT_SFD;
-				DST_MAC     <= cnt_q == ADDR_CNT ? SRC_MAC: DST_MAC; 
-				SRC_MAC     <= cnt_q == ADDR_CNT ? PKT_TYPE: SRC_MAC;
-				PKT_TYPE    <= cnt_q == FRAME_TYPE_CNT ? type_vlan: VLAN: BODY;
-				VLAN        <= cnt_q == FRAME_TYPE_CNT ? BODY: VLAN; 
-				BODY        <= mac_v_i ? BODY: FCS; 
-				FCS         <= IDLE;  
+				ERR:        fsm_q <= IDLE; 
+				IDLE:       fsm_q <= mac_v_i ? DETECT_SFD : IDLE;
+				DETECT_SFD: fsm_q <= frame_start ? DST_MAC: DETECT_SFD;
+				DST_MAC:    fsm_q <= cnt_q == ADDR_CNT ? SRC_MAC: DST_MAC; 
+				SRC_MAC:    fsm_q <= cnt_q == ADDR_CNT ? PKT_TYPE: SRC_MAC;
+				PKT_TYPE:   fsm_q <= cnt_q == FRAME_TYPE_CNT ? (type_vlan? VLAN: BODY):PKT_TYPE;
+				VLAN:       fsm_q <= cnt_q == FRAME_TYPE_CNT ? BODY: VLAN; 
+				BODY:       fsm_q <= mac_v_i ? BODY: FCS; 
+				FCS:        fsm_q <= IDLE;  
 			endcase	
 		end
 	end
@@ -125,8 +125,8 @@ assign vid_match = buff[VID_W-1:0] == vid_i;
 always @(posedge clk) 
 	if ((fsm_q == DST_MAC) & (cnt_q == ADDR_CNT))
 		fwd_q <= dst_addr_group | dst_addr_match;
-	else ((fsm_q == VLAN) & (cnt_q == FRAME_TYPE_CNT))
-		fwd_q <= fwd_q & vid_match
+	else if ((fsm_q == VLAN) & (cnt_q == FRAME_TYPE_CNT))
+		fwd_q <= fwd_q & vid_match;
 
 // sticky error 
 always @(posedge clk) 

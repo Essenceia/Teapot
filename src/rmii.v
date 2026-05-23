@@ -26,7 +26,7 @@ module rmii(
 
 	input wire        rx_v_i, //async valid, carrier is none idle signal, packet will start on SRD	
 	input wire [1:0]  rx_i,
-	input wire        rx_err_i // error, drop packet
+	input wire        rx_err_i, // error, drop packet
 
 	output wire       mac_rx_v_o,
 	output wire [1:0] mac_rx_o,
@@ -35,8 +35,10 @@ module rmii(
 	input wire        mac_tx_v_i,
 	input wire [1:0]  mac_tx_i
 );
-localparam [3:0] RST_CYCLES = 4'15;
-localparam [3:0] RST_RELEASE_CNT = 4'1;
+localparam       RST_CNT_W = 4;
+localparam [RST_CNT_W-1:0] RST_CYCLES = {RST_CNT_W{1'b1}};
+localparam [RST_CNT_W-1:0] RST_RELEASE_CNT = {{RST_CNT_W-1{1'b0}}, 1'b1};
+
 localparam [2:0] RST_MODE = 3'b011; // full-duplex 100BASE-TX 
 
 localparam [2:0] CONF_MODE = 3'b011; // 100BASE-T full-duplex
@@ -48,23 +50,23 @@ Release phy rst when rst counter reaches 1 and not
 0 as we need to switch the rx CRS_DV pin direction 
 before starting normal operations.
 */
-reg rst_cnt_q; 
+reg [RST_CNT_W-1:0] rst_cnt_q; 
 always @(posedge clk)
 	if( ~rst_n ) 
 		rst_cnt_q <= RST_CYCLES;
-	else ( |rst_cnt_q )
-		rst_cnt_q <= rst_cnt_q - 4'd1;
+	else if ( |rst_cnt_q )
+		rst_cnt_q <= rst_cnt_q - {{RST_CNT_W-1{1'b0}}, 1'b1};
 
 always @(posedge clk) 
 	if (~rst_n)
 		phy_rst_n_o <= 1'b0;
-	if ( rst_cnt_q == RST_RELEASE_CNT ) 
+	else if ( rst_cnt_q == RST_RELEASE_CNT ) 
 		phy_rst_n_o <= 1'b0;
 
 always @(posedge clk) 
 	if (~rst_n) 
 		{rx_v_dir_o, rx_dir_o} <= {3{1'b1}};
-	if ( &(~rst_cnt_q) )
+	else if ( &(~rst_cnt_q) )
 		{rx_v_dir_o, rx_dir_o} <= {3{1'b0}};
 
 // MODE

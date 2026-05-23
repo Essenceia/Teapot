@@ -61,8 +61,8 @@ endif
 # Lint #
 ########
 
-entry_deps := $(wildcard $(SRC_DIR)/*.v) 
-fpga_deps := $(entry_deps) $(wildcard $(FPGA_DIR)/*.v)
+entry_deps := $(wildcard $(SRC_DIR)/*.v) $(wildcard $(SRC_DIR)/*.vh) 
+fpga_deps := $(entry_deps) $(wildcard $(FPGA_DIR)/*.v) $(wildcard $(SRC_DIR)/*.vh)
 gate_phony_deps := $(IMPLEM_DIR)/$(PROJET_NAME).nl.v $(GATE_PHONY_LIB)/sg13g2_stdcell_phony.v 
 
 lint: $(entry_deps)
