@@ -28,12 +28,12 @@ module tx_tt_buffer(
 	output wire tx_v_o, 
 	output wire [1:0] tx_o
 ); 
-wire inner_clk; 
+wire      inner_clk; 
 reg       tx_v_q; 
 reg [1:0] tx_q;
 
 reg       clk_phase_sel_q;
-always @(posedge clk) 
+always @(posedge ref_clk) 
 	if (~rst_n) 
 		clk_phase_sel_q <= clk_phase_sel_i;
 

@@ -13,7 +13,7 @@ module rmii(
 	input      clk,
 	input wire rst_n, 
 
-	input wire        clk_phase_sel,
+	input wire        clk_phase_sel_i,
 	// config
 	output wire       phy_rst_n_o, // latch config on rst release
 	output wire       rx_v_dir_o, // CRS_DV dir, 0=input, 1=output
@@ -21,7 +21,7 @@ module rmii(
 	output wire       rx_v_o, // config, MODE2
 	output wire [1:0] rx_o, // config, MODE[1:0]
 
-	output wire       tx_en_o, // transmit strobe
+	output wire       tx_v_o, // transmit strobe
 	output wire [1:0] tx_o,	
 
 	input wire        rx_v_i, //async valid, carrier is none idle signal, packet will start on SRD	
