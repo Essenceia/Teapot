@@ -173,7 +173,7 @@ crc m_fcs(
 	.crc_en(fsm_q != DETECT_SFD),
 	.crc_out(pkt_fcs)
 );
-assign fcs_err = eof & ~|pkt_fcs;// end of packet, check fcs
+assign fcs_err = eof & |(pkt_fcs);// end of packet, check fcs
 
 // data buffer, excluding the FCS without keeping track of
 // the data width for portability

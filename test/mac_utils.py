@@ -11,6 +11,8 @@ import random
 from array import array
 from typing import NamedTuple, Optional
 
+import crc_utils 
+
 class dot1q(NamedTuple):
 	tpid: bytes = b'\x81\x00'
 	tci: bytes = bytes(2)
@@ -42,32 +44,30 @@ class eth_frame:
 		l = random.randint(48,60)
 		body = bytearray(0)
 		for i in range(0,l):
-			body.append(0)
-			#body.append(random.randint(0,255))
+			body.append(random.randint(0,255))
 		self.body = body
-		#self.header = self.header._replace(ethtype = struct.pack('!H', l))
-		self.header = self.header._replace(ethtype = b'\xFF\xFF')
- 
+		self.header = self.header._replace(ethtype = struct.pack('!H', l))
+
+	def set_payload(self, payload, ethtype=b'\x08\x04'):
+		self.body = payload
+		self.header = self.header._replace(ethtype = ethtype)
+
 	def __init__(self, dst, src, vlan_tag = None):
 		if self.header.vlan_tag is not None: 
 			self.header = MAC_header(dst,src,vlan_tag = dot1q(tci=vlan_tag))
 		else:
 			self.header = MAC_header(dst, src) 
-	
-	def calc_fcs(self):
-		pass # TODO
 
 	def raw(self):
-		self.calc_fcs()
 		r = bytearray()
-		r += self.sfd
 		r += self.header.raw()
 		r += self.body
-		r += self.fcs
+		r += crc_utils.calc_fcs(r)
+		r = self.sfd + r
 		return r
 
 async def phy_stream_frame(dut, raw):
-	cocotb.log.info(f"raw frame {raw}")
+	cocotb.log.info(f"raw frame {raw.hex()}")
 	preamble = random.randint(1,10)
 	dut.phy_rx_err.value = 0
 	for _ in range(1, preamble):
@@ -75,12 +75,12 @@ async def phy_stream_frame(dut, raw):
 		dut.phy_rx.value = 0
 		await ClockCycles(dut.clk,1)
 	for x in raw:
-		cocotb.log.info(f"x {hex(x)}") 
+		cocotb.log.debug(f"x {hex(x)}") 
 		for _ in range(0,4):
 			dut.phy_rx_v.value = 1
 			dut.phy_rx.value = (x & 0xc0) >> 6
 			await ClockCycles(dut.clk,1)
-			cocotb.log.info(f"{dut.phy_rx.value}")
+			cocotb.log.debug(f"{dut.phy_rx.value}")
 			x = x << 2
 	# IPG
 	ipg = random.randint(1,10)
@@ -91,6 +91,10 @@ async def phy_stream_frame(dut, raw):
 		await ClockCycles(dut.clk,1)
 	
 async def send_simple_frame(dut):
+	random.seed(0)
+	# group dst address
 	frame = eth_frame(b"\xFF\xFF\x00\xFF\x00\xFF",b"\x00\x11\x22\x33\x44\x00")
 	frame.random_body()
 	await phy_stream_frame(dut,frame.raw())
+
+		
