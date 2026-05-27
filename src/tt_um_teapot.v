@@ -24,8 +24,12 @@ wire        clk_phase_sel;
 
 wire [1:0] mcu_tx_cmd;
 wire [1:0] mcu_tx;
-wire [1:0] mcu_rx_cmd;
-wire [1:0] mcu_rx;
+
+wire       data_rx_v;
+wire       data_rx_conf;
+wire       data_rx_start;
+wire       data_rx_err;
+wire [1:0] data_rx;
 
 wire       mac_tx_v;
 wire       mac_tx_start;
@@ -121,8 +125,11 @@ mac_rx m_mac_rx(
 	.rx_i(mac_rx),
 	.rx_err_i(mac_rx_err),
 
-	.mcu_cmd_o(mcu_rx_cmd),
-	.mcu_o(mcu_rx)
+	.data_v_o(data_rx_v),
+	.data_conf_o(data_rx_conf),
+	.data_start_o(data_rx_start),
+	.data_err_o(data_rx_err),
+	.data_o(data_rx)
 );
 
 // tx mcu intf

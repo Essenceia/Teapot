@@ -12,21 +12,29 @@ RX MAC layer. Will filter out all unicast packets not meant for
 this device and will forward starting from the payload and excluding
 the FCS. 
 */ 
-module mac_rx(
+module mac_rx #(
+	// 802a playpen ethertypes 
+	parameter [15:0] APP_ETHTYPE    = 16'h88B5
+	parameter [15:0] CONF_ETHTYPE = 16'h88B6
+)(
 	input clk, 
 	input wire rst_n, 
 
-	input [47:0] phy_mac_i, 
-	input [11:0] vid_i,// vlan id
+	input wire [47:0] phy_mac_i, 
+	input wire [11:0] vid_i,// vlan id
  
-	input        rx_v_i, 
-	input [1:0]  rx_i, 
-	input        rx_err_i,
+	input wire        rx_v_i, 
+	input wire [1:0]  rx_i, 
+	input wire        rx_err_i,
 
-	output       data_v_o,
-	output       data_start_o,
-	output       data_err_o,
-	output [1:0] data_o
+	// to accelerator wrapper
+	output wire [47:0] src_mac_o, 
+
+	output wire        data_v_o,
+	output wire [15:0] data_conf_o,
+	output wire        data_start_o,
+	output wire        data_err_o,
+	output wire [1:0]  data_o
 ); 
 // physical interface
 localparam PHY_W = 2; 
@@ -71,6 +79,11 @@ reg [3:0] fsm_q;
 reg err_q; 
 reg fwd_q; // forward packet to higher level, not filted out
 
+wire ethtype_match;
+wire pkt_app;
+wire pkt_conf;
+reg  pkt_conf_q;
+
 localparam BUF_W = MAC_W; // max(MAC_W,SFD_W,FCS_W)
 
 reg  [BUF_W-3:0] buff_q;
@@ -82,9 +95,8 @@ reg  [CNT_W-1:0] cnt_q; // shared counter
 
 wire dst_addr_match; 
 wire dst_addr_broadcat; 
-wire dst_addr_group; 
 
-wire body_start_next;
+wire is_type;
 reg  body_start_q;
 wire type_vlan; 
 wire vid_match;
@@ -142,23 +154,32 @@ always @(posedge clk)
 		cnt_q <= cnt_q + {{CNT_W-1{1'b0}}, 1'b1};
 
 assign dst_addr_match = phy_mac_i == buff;
-// forwarding all broadcast and multicast packets
-// 0 - Unicast Address
-// 1 - Multicast/Broadcast Address
-assign dst_addr_group = buff[MAC_W-8];  
-
 assign type_vlan = buff[FRAME_TYPE_W-1:0] == TYPE_VLAN; 
 assign vid_match = buff[VID_W-1:0] == vid_i;
 
-assign body_start_next = (cnt_q[FRAME_TYPE_CNT_W-1:0] == FRAME_TYPE_CNT) & (((fsm_q == PKT_TYPE) & ~type_vlan) 
-				       | (fsm_q == VLAN)); 
+assign is_type = (cnt_q[FRAME_TYPE_CNT_W-1:0] == FRAME_TYPE_CNT) & (((fsm_q == PKT_TYPE) & ~type_vlan) 
+				 | (fsm_q == VLAN)); 
+
+// ethertype filtering
+assign pkt_conf = buff[FRAME_TYPE_W-1:0] == CONF_ETHTYPE;
+assign pkt_app = buff[FRAME_TYPE_W-1:0] == APP_ETHTYPE;
+
+assign ethtype_match = (pkt_app | pkt_conf);
+
+always @(posedge clk) 
+	if (~rst_n) 
+		pkt_conf_q <= 1'b0;
+	else if (is_type) 
+		pkt_conf_q <= pkt_conf;
 
 // forward 
 always @(posedge clk) 
-	if ((fsm_q == DST_MAC) & (cnt_q[ADDR_CNT_W-1:0] == ADDR_CNT))
-		fwd_q <= dst_addr_group | dst_addr_match;
+	if ((fsm_q == DST_MAC) & (cnt_q[ADDR_CNT_W-1:0] == ADDR_CNT)) 
+		fwd_q       <= dst_addr_match;
 	else if ((fsm_q == VLAN) & (cnt_q[FRAME_TYPE_CNT_W-1:0] == FRAME_TYPE_CNT))
 		fwd_q <= fwd_q & vid_match;
+	else if (is_type)
+		fwd_q <= fwd_q & ethtype_match;
 
 // sticky error 
 always @(posedge clk) 
@@ -189,10 +210,11 @@ always @(posedge clk)
 		delay_data_v_q <= {delay_data_v_q[DELAY_DEPTH-2:0], fsm_q == BODY & fwd_q};
 
 always @(posedge clk) begin
-	delay_data_start_q <= {delay_data_start_q[DELAY_DEPTH-2:0], body_start_next & fwd_q};	
+	delay_data_start_q <= {delay_data_start_q[DELAY_DEPTH-2:0], is_type & ethtype_match & fwd_q};	
 end
 
 assign data_v_o       = delay_data_v_q[DELAY_DEPTH-1];
+assign data_conf_o    = pkt_conf_q; 
 assign data_start_o   = delay_data_start_q[DELAY_DEPTH-1]; 
 assign data_err_o     = err_q;
 assign data_o         = buff_q[FCS_W+1:FCS_W];

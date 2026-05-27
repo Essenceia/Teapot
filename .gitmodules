@@ -1,0 +1,3 @@
+[submodule "src/bf16"]
+	path = src/bf16
+	url = https://github.com/Essenceia/BFloat16
