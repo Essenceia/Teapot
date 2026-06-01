@@ -60,8 +60,8 @@ localparam ETHTYPE  = 3'd5;
 localparam PAYLOAD  = 3'd6;
 localparam FCS      = 3'd7;
 
-reg [2:0] fsm_q;
-reg cnt_q; 
+reg [2:0]       fsm_q;
+reg [CNT_W-1:0] cnt_q; 
 always @(posedge clk) 
 	if (~rst_n) 
 		fsm_q <= IDLE; 
@@ -71,12 +71,23 @@ always @(posedge clk)
 			PREAMBLE: fsm_q <= cnt_q == PREAMBLE_CNT ? SFD: PREAMBLE; 
 			SFD     : fsm_q <= cnt_q == SFD_CNT ? SRC_MAC: SFD; 
 			SRC_MAC : fsm_q <= cnt_q == MAC_CNT ? DST_MAC: SRC_MAC; 
-			DST_MAC : fsm_q <= cnt_q == MAC_CNT ? SRC_MAC: ETHTYPE; 
+			DST_MAC : fsm_q <= cnt_q == MAC_CNT ? ETHTYPE: DST_MAC;
+			ETHTYPE : fsm_q <= cnt_q == ETHTYPE_CNT ? PAYLOAD : ETHTYPE; 
 			PAYLOAD : fsm_q <= data_last_i ? FCS : PAYLOAD;
 			FCS     : fsm_q <= cnt_q == FCS_CNT ? IDLE : FCS;
 		endcase
 	end
 
+wire rst_cnt; 
+assign rst_cnt = (fsm_q == IDLE) | (fsm_q == PAYLOAD) 
+			   | ((fsm_q == PREAMBLE) & (cnt_q == PREAMBLE_CNT))
+			   | ((fsm_q == SFD) & (cnt_q == SFD_CNT))
+               | (((fsm_q == SRC_MAC) | (fsm_q == DST_MAC)) & (cnt_q == MAC_CNT))
+			   | ((fsm_q == ETHTYPE) & (cnt_q == ETHTYPE_CNT));
+
+always @(posedge clk) 
+	cnt_q <= rst_cnt ? {CNT_W{1'b0}}: cnt_q + {{CNT_W-1{1'b0}}, 1'b1}; 
+	
 assign data_acc_o = (fsm_q == PAYLOAD);
 
 // fcs 
@@ -104,12 +115,12 @@ assign sel_fcs     = (fsm_q == PAYLOAD) & data_last_i;
 
 // TODO add a onehot0 attribute if yosys doesn't catch it automatically 
 always @(posedge clk) begin
-	casex ({sel_fcs, sel_ethtype, sel_dst_mac, sel_src_mac})
-		4'bXXX1: shift_buff_q <= phy_mac_i;
-		4'bXX1X: shift_buff_q <= data_dst_mac_i;
-		4'bX1XX: shift_buff_q <= {APP_ETHTYPE, {BUFF_W-ETHTYPE_W{1'bX}}};
-		4'b1XXX: shift_buff_q <= {pkt_fcs, {BUFF_W-FCS_W{1'bX}}};
-		default: shift_buff_q <= {shift_buff_q[BUFF_W-PHY_W-1-:PHY_W], {BUFF_W-PHY_W{1'bX}}}; 
+	case ({sel_fcs, sel_ethtype, sel_dst_mac, sel_src_mac})
+		4'b0001: shift_buff_q <= phy_mac_i;
+		4'b0010: shift_buff_q <= data_dst_mac_i;
+		4'b0100: shift_buff_q <= {APP_ETHTYPE, {BUFF_W-ETHTYPE_W{1'bX}}};
+		4'b1000: shift_buff_q <= {pkt_fcs, {BUFF_W-FCS_W{1'bX}}};
+		default: shift_buff_q <= {shift_buff_q[BUFF_W-PHY_W-1:0], {PHY_W{1'bX}}}; 
 	endcase
 end
 
