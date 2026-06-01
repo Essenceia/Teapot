@@ -13,6 +13,9 @@ from typing import NamedTuple, Optional
 
 import crc_utils 
 
+APP_ETHTYPE = b"\x88\xB5"
+DEVICE_MAC = b"\x00\x90\xCF\x00\xBE\xEF"
+
 class dot1q(NamedTuple):
 	tpid: bytes = b'\x81\x00'
 	tci: bytes = bytes(2)
@@ -40,7 +43,7 @@ class eth_frame:
 	body: bytes = bytes(48)
 	fcs: bytes = b'\xff\xff\xff\xff'
 	
-	def random_body(self, ethtype=b'\x08\x04')):
+	def random_body(self, ethtype=b'\x88\xB5'):
 		l = random.randint(48,60)
 		body = bytearray(0)
 		for i in range(0,l):
@@ -48,7 +51,7 @@ class eth_frame:
 		self.set_payload(body, ethtype)
 		
 
-	def set_payload(self, payload, ethtype=b'\x08\x04'):
+	def set_payload(self, payload, ethtype=b'\x88\xB5'):
 		self.body = payload
 		self.header = self.header._replace(ethtype = ethtype)
 
@@ -93,8 +96,8 @@ async def phy_stream_frame(dut, raw):
 async def send_simple_frame(dut):
 	random.seed(0)
 	# group dst address
-	frame = eth_frame(b"\xFF\xFF\x00\xFF\x00\xFF",b"\x00\x90\xCF\00\xBE\xEF")
-	frame.random_body(ethtype = b"\x88\xB5")
+	frame = eth_frame(b"\xFF\xFF\x00\xFF\x00\xFF",DEVICE_MAC)
+	frame.random_body(ethtype = APP_ETHTYPE)
 	await phy_stream_frame(dut,frame.raw())
 
 		
