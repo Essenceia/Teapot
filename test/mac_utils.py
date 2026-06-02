@@ -12,9 +12,12 @@ from array import array
 from typing import NamedTuple, Optional
 
 import crc_utils 
+import app_utils
 
 APP_ETHTYPE = b"\x88\xB5"
-DEVICE_MAC = b"\x00\x90\xCF\x00\xBE\xEF"
+DEFAULT_DEVICE_MAC = b"\x00\x90\xCF\x00\xBE\xEF"
+DEFAULT_VID = b"\x0D\xAD"
+VID_MASK = b"\x0F\xFF"
 
 class dot1q(NamedTuple):
 	tpid: bytes = b'\x81\x00'
@@ -41,7 +44,7 @@ class MAC_header(NamedTuple):
 class eth_frame:
 	sfd: bytes = b'\xd5'
 	header: MAC_header = MAC_header()
-	body: bytes = bytes(48)
+	body: bytes = bytes(46)
 	fcs: bytes = b'\xff\xff\xff\xff'
 	
 	def random_body(self, ethtype : bytes(2) =b'\x88\xB5', l:int= 46):
@@ -116,7 +119,7 @@ def bitpair_to_bytes(buff):
 	assert(i % 4 == 0)
 	return frame
 
-async def read_tx_frame(dut):
+async def read_tx_frame(dut) -> bytes:
 	buff = array('B') 
 	while( dut.phy_tx_v.value != 1):
 		await ClockCycles(dut.clk, 1)
@@ -125,16 +128,28 @@ async def read_tx_frame(dut):
 		await ClockCycles(dut.clk, 1)
 	return bitpair_to_bytes(buff)
 
-def raw_tx_to_eth_frame(raw):
-	pass	
-	
-async def send_simple_frame(dut):
-	random.seed(0)
+async def check_no_tx_frame(dut, timeout:int = 150) -> None:
+	for _ in range(0, timeout): 
+		if (dut.phy_tx_v.value == 1):
+			cocotb.log.error("Error, unexpected tx response")
+			assert(0)
+		await ClockCycles(dut.clk, 1)
+		
+# { expect result boolean, result }
+def expected_response(req: eth_frame) -> tuple[bool, eth_frame]:
+	tx_sent = False
+	if (req.header.dst == DEFAULT_DEVICE_MAC) and(req.header.ethtype == APP_ETHTYPE): 
+		tx_sent = True
+	if req.header.vlan_tag is not None: 	
+		if (req.header.vlan_tag.tci & VID_MASK) != DEFAULT_VID:
+			tx_sent = False
+	resp = eth_frame(dst=req.header.src, src=req.header.dst)
+	resp.set_payload(app_utils.layer3_app(req.body), APP_ETHTYPE)
+	return tx_sent, resp
+		
+def simple_frame() -> eth_frame:
 	# group dst address
-	frame = eth_frame(dst=DEVICE_MAC, src=b"\x00\xF0\x00\xFF\x00\xFF")
+	frame = eth_frame(dst=DEFAULT_DEVICE_MAC, src=b"\x00\xF0\x00\xFF\x00\xFF")
 	frame.random_body(ethtype = APP_ETHTYPE)
-	read_tx_thread = cocotb.start_soon(read_tx_frame(dut))
-	await phy_stream_frame(dut,frame.raw())
-	tx_frame = await read_tx_thread
-
+	return frame
 		

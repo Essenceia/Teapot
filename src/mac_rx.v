@@ -100,6 +100,7 @@ wire            type_vlan;
 wire            vid_match;
   
 wire [FCS_W-1:0] fcs;
+wire [FCS_W-1:0] fcs_early_unused;
 wire             fcs_err; 
 wire eof; 
 
@@ -193,7 +194,6 @@ always @(posedge clk)
 		err_q <=  err_q | (rx_v_i & rx_err_i) | fcs_err; 
 
 // FCS 
-wire fcs_early_unused;
 crc_8 m_fcs(
 	.clk(clk),
 	.crc_rst_i(fsm_q == IDLE),

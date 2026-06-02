@@ -75,6 +75,23 @@ always @(posedge clk)
 /* accelerator */
 wire [15:0] mul_res;
 
+`ifdef COCOTB
+/* Replacing floating point model with unsigned integer math 
+ * for cocotb since we don't have a good golden model 
+ * in python for bf16, bf16 implementations used a clamped down
+ * version of f32 which would result in the accumulation of 
+ * the different precision rounding error though the network.
+ * Floating point math correctness in this ASIC will be thoughly 
+ * validated during emulation on the FPGA with the actual 
+ * requests and results sent over ethernet. This will likely 
+ * be about as fast as simulating it anyways. */
+wire [15:0] mul_raw_carry, mul_raw; 
+assign {mul_raw_carry, mul_raw} = payload_q[31:16]* payload_q[15:0]; 
+// clamping
+assign mul_res = |mul_raw_carry ? {16{1'b1}} : mul_raw; 
+ 
+`else
+
 bf16_mul_fast m_bf16_mul(
 	.clk(clk),
 
@@ -90,6 +107,8 @@ bf16_mul_fast m_bf16_mul(
 	.e_o(mul_res[14:7]),
 	.m_o(mul_res[6:0])
 );
+
+`endif // COCOTB
 
 /* TX 
 

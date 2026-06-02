@@ -62,9 +62,24 @@ async def rst(dut, ena=1, start_jtag=False, start_main_clk=True):
 	if not(start_main_clk): 
 		assert(clk_task.cancel())
 
+async def send_and_check_frames(dut,rx : eth_frame):
+	tx_sent, tx = mac_utils.expected_response(rx)
+	if tx_sent: 
+		read_tx_thread = cocotb.start_soon(mac_utils.read_tx_frame(dut))
+	else:
+		read_tx_thread = cocotb.start_soon(mac_utils.check_no_tx_frame(dut))
+	await mac_utils.phy_stream_frame(dut,rx.raw())
+	tx_frame = await mac_utils.read_tx_frame(dut)
+	if tx_sent:
+		tx_raw = tx.raw()
+		if (tx_frame != tx_raw): 
+			cocotb.log.error(f"Error, missmatch between gotten and expected\ngot {tx_raw.hex()}\nexp {tx_frame.tobytes().hex()}")
+			assert(0)
+	
 # Simple test 
 @cocotb.test()
 async def simple_rx_test(dut):
+	random.seed(0)
 	await rst(dut) 
-	await mac_utils.send_simple_frame(dut)	
+	await send_and_check_frames(dut, mac_utils.simple_frame())	
 	await ClockCycles(dut.clk, 150)
