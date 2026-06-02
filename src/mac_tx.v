@@ -79,7 +79,8 @@ always @(posedge clk)
 	end
 
 wire rst_cnt; 
-assign rst_cnt = (fsm_q == IDLE) | (fsm_q == PAYLOAD) 
+assign rst_cnt = (fsm_q == IDLE) 
+			   | ((fsm_q == PAYLOAD) & data_last_i)
 			   | ((fsm_q == PREAMBLE) & (cnt_q == PREAMBLE_CNT))
 			   | ((fsm_q == SFD) & (cnt_q == SFD_CNT))
                | (((fsm_q == SRC_MAC) | (fsm_q == DST_MAC)) & (cnt_q == MAC_CNT))
@@ -91,13 +92,19 @@ always @(posedge clk)
 assign data_acc_o = (fsm_q == PAYLOAD) | ((fsm_q == ETHTYPE) & (cnt_q == ETHTYPE_CNT));
 
 // fcs 
-wire [FCS_W-1:0] pkt_fcs;
-crc m_fcs(
+wire [FCS_W-1:0] fcs_early;
+wire [FCS_W-1:0] fcs_late_unused;
+reg [8-PHY_W-1:0] sent_buff_q;
+always @(posedge clk) 
+	sent_buff_q <= {phy_o, sent_buff_q[8-PHY_W-1:PHY_W]};
+
+crc_8 m_fcs(
 	.clk(clk),
-	.rst_crc(fsm_q == SFD),
-	.data_in(phy_o),
-	.crc_en(1'b1),
-	.crc_out(pkt_fcs)
+	.crc_rst_i(fsm_q == SFD),
+	.data_i({phy_o, sent_buff_q}),
+	.crc_en_i(cnt_q[1:0] == 2'b11),
+	.crc_early_o(fcs_early),
+	.crc_o(fcs_late_unused)
 );
 
 // output shift buffer
@@ -117,7 +124,7 @@ wire [BUFF_W-1:0] swap_src_mac, swap_dst_mac, swap_ethertype, swap_fcs;
 byteswap #(.W(BUFF_W/8)) m_swap_src_mac(.i(phy_mac_i),.o(swap_src_mac));
 byteswap #(.W(BUFF_W/8)) m_swap_dst_mac(.i(data_dst_mac_i),.o(swap_dst_mac));
 byteswap #(.W(BUFF_W/8)) m_swap_ethertype(.i({APP_ETHTYPE, {BUFF_W-ETHTYPE_W{1'bX}}}),.o(swap_ethertype));
-byteswap #(.W(BUFF_W/8)) m_swap_fcs(.i({pkt_fcs, {BUFF_W-FCS_W{1'bX}}}),.o(swap_fcs));
+byteswap #(.W(BUFF_W/8)) m_swap_fcs(.i({fcs_early, {BUFF_W-FCS_W{1'bX}}}),.o(swap_fcs));
 
 // TODO add a onehot0 attribute if yosys doesn't catch it automatically 
 always @(posedge clk) begin

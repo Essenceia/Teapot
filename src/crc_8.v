@@ -17,12 +17,14 @@ module crc_8(
 	input wire         crc_rst_i,
 	input wire         crc_en_i,
 	input wire  [7:0]  data_i,
+	output wire [31:0] crc_early_o, // unflopped version
 	output wire [31:0] crc_o
 );
 reg [31:0] lfsr_q;
 reg [31:0] lfsr_c;
 
-assign crc_o = lfsr_q;
+assign crc_early_o = lfsr_c;
+assign crc_o       = lfsr_q;
 
 always @(*) begin
 	lfsr_c[0] = lfsr_q[24] ^ lfsr_q[30] ^ data_i[0] ^ data_i[6];

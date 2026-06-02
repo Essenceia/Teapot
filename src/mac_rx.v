@@ -99,7 +99,7 @@ wire            is_type;
 wire            type_vlan; 
 wire            vid_match;
   
-wire [FCS_W-1:0] pkt_fcs;
+wire [FCS_W-1:0] fcs;
 wire             fcs_err; 
 wire eof; 
 
@@ -193,14 +193,16 @@ always @(posedge clk)
 		err_q <=  err_q | (rx_v_i & rx_err_i) | fcs_err; 
 
 // FCS 
+wire fcs_early_unused;
 crc_8 m_fcs(
 	.clk(clk),
 	.crc_rst_i(fsm_q == IDLE),
 	.data_i(buff[BUF_W-1-:8]),
 	.crc_en_i((fsm_q != DETECT_SFD) & (cnt_q[1:0] == 2'b11)),
-	.crc_o(pkt_fcs)
+	.crc_early_o(fcs_early_unused),
+	.crc_o(fcs)
 );
-assign fcs_err = eof & |(pkt_fcs);// end of packet, check fcs
+assign fcs_err = eof & |(fcs);// end of packet, check fcs
 
 // data buffer, excluding the FCS without keeping track of
 // the data width for portability
