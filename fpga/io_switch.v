@@ -24,7 +24,7 @@ module io_switch #(
 // tristate buff for out dir
 genvar i; 
 generate 
-	for (i = 0; i < W; i++): g_tristate
+	for (i = 0; i < W; i++) begin: g_tristate
 		assign pin_io[i] = (dir_sel_i[i])? data_out_i[W]: 1'bz; 
 		assign data_in_o[i] = ~dir_sel_i[i] & pin_io[W];// clamp to 0 to help debug
 	end

@@ -18,8 +18,8 @@ module emulator #(
 
 
 	// PmodA	
-	input  wire [1:0]  phy_tx_o,
-	input  wire        phy_tx_v_o,
+	output  wire [1:0]  phy_tx_o,
+	output  wire        phy_tx_v_o,
 	
 	// Pmod B
 	inout  wire [PMOD_W-1:0] pin_io,
@@ -88,7 +88,7 @@ BUFG m_bufg_clk(
 ODDR #(
 	.DDR_CLK_EDGE("SAME_EDGE"),
 	.INIT(1'b1),
-	.SRCTYPE("ASYNC")
+	.SRTYPE("ASYNC")
 ) m_oddr_refclk(
 	.Q(clk_phy_o),
 	.C(clk),
@@ -116,7 +116,7 @@ assign unused_o = {4'h0, 1'b1, {7{1'b1}}}; // an, dp, seg
 
 /* switch, okay with bounce */
 assign rst_async = switch_i[0];
-assign tx_phase_async = switch[1];
+assign tx_phase_async = switch_i[1];
 
 debounce m_switch_debounce(
 	.clk(clk),
