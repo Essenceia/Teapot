@@ -31,13 +31,19 @@ module tx_tt_buffer(
 wire      inner_clk; 
 reg       tx_v_q; 
 reg [1:0] tx_q;
-
 reg       clk_phase_sel_q;
+wire       tx_v_buff;
+wire [1:0] tx_buff;
+
 always @(posedge ref_clk) 
-	if (~rst_n) 
-		clk_phase_sel_q <= clk_phase_sel_i;
+	if (~rst_n)	clk_phase_sel_q <= clk_phase_sel_i;
 
 assign inner_clk = clk_phase_sel_q ? ~ref_clk : ref_clk; 
+
+// shooting design opt a bit until it stops being too good at creating
+// hold violations
+assign tx_v_buff = ~(~tx_v_i); (* dont_touch *)
+assign tx_buff   = ~(~tx_i); (* dont_touch *)
 
 always @(posedge inner_clk) begin
 	tx_v_q <= tx_v_i; 
