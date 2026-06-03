@@ -99,3 +99,7 @@ async def filter_rx_test(dut):
 	for _ in range(0,10):
 		await send_and_check_frames(dut, mac_utils.test_filtered_packets())
 	await ClockCycles(dut.clk, 10)
+
+@cocotb.test()
+async def update_eth_config(dut):
+	pass
