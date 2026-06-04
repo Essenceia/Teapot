@@ -99,6 +99,7 @@ async def simple_rx_test(dut):
 
 @cocotb.test()
 async def filter_rx_test(dut):
+	random.seed(0)
 	await rst(dut)
 	for _ in range(0,10):
 		await send_and_check_frames(dut, mac_utils.test_filtered_packets())
@@ -106,6 +107,7 @@ async def filter_rx_test(dut):
 
 @cocotb.test()
 async def update_eth_config(dut):
+	random.seed(0)
 	await rst(dut)
 	await send_frame(dut, mac_utils.simple_config())
 	await ClockCycles(dut.clk, 10)

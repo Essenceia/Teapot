@@ -9,13 +9,14 @@ class config_payload():
 	addr: bytes(6)
 	vid: bytes(2) #12 bits
 	phase: bytes(1) # only top bit
-	padding: bytes(38)
+	padding: bytearray(38)
 
 	def random(self):
 		self.addr = random.randbytes(6)
 		self.vid = random.randbytes(2)
 		self.phase = random.randbytes(1)
-		self.padding = random.randbytes(37)
+		self.padding = bytearray(36)#random.randbytes(37)
+		self.padding.append(255)
 
 	def set(self, addr: bytes(6), vid: bytes(2), phase:bool):
 		if (phase):
@@ -24,7 +25,7 @@ class config_payload():
 			self.phase = b"\x00"
 		self.addr = addr
 		self.vid = vid
-		self.padding = random.randbytes(37)
+		self.padding = bytes(37)#random.randbytes(37)
 		
 	def __init__(self):
 		self.random()

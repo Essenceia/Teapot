@@ -47,7 +47,7 @@ module mac_conf #(
 0                    47            63             65       383 
  
 */
-localparam PKT_DATA_W       = MAC_W + VID_W + 1;
+localparam PKT_DATA_W       = MAC_W + VID_W + 2;
 localparam PKT_DATA_CNT_VAL = (PKT_DATA_W/PHY_W) - 1;
 localparam PKT_DATA_CNT_W   = $clog2(PKT_DATA_CNT_VAL);
 /* verilator lint_off WIDTHTRUNC */
@@ -83,14 +83,20 @@ always @(posedge clk)
 	if (fsm_q == IDLE) cnt_q <= {PKT_DATA_CNT_W{1'b0}};
 	else cnt_q <= cnt_q + {{PKT_DATA_CNT_W-1{1'b0}}, 1'b1};
 
+localparam BUF_W = PKT_DATA_W;
+reg  [BUF_W-1:0] buff_q;
+
+wire [7:0] buff_next = buff_q[BUF_W-1-:8];
+wire [47:0] mac_t = buff_q[BUF_W-1-:MAC_W];
+
 always @(posedge clk) 
 	if (~rst_n) 
-		{ mac_addr_q, vid_q, phase_sel_q} <= { DEFAULT_MAC, DEFAULT_VID ,1'b0, default_tx_phase_i};
+		buff_q <= { DEFAULT_MAC, DEFAULT_VID , default_tx_phase_i, 1'bx};
 	else if (fsm_q == CONF)
-		{ mac_addr_q, vid_q, phase_sel_q} <= {mac_addr_q[MAC_W-3:0], vid_q, phase_sel_q, data_i };
+		buff_q <= {data_i, buff_q[BUF_W-1:PHY_W]};
 		
-assign clk_phase_sel_o = phase_sel_q[0];
-assign mac_addr_o = mac_addr_q;
-assign vid_o = vid_q;
+assign clk_phase_sel_o = buff_q[1];
+assign mac_addr_o = buff_q[BUF_W-1-:MAC_W];
+assign vid_o = buff_q[BUF_W-MAC_W-1-:VID_W];
 
 endmodule

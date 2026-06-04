@@ -154,7 +154,7 @@ def expected_response(req: eth_frame) -> tuple[bool, eth_frame]:
 def simple_frame() -> eth_frame:
 	# group dst address
 	frame = eth_frame(dst=DEFAULT_DEVICE_MAC, src=b"\x00\xF0\x00\xFF\x00\xFF")
-	frame.random_body(ethtype = APP_ETHTYPE)
+	frame.set_payload(payload = app_utils.random_request_payload() , ethtype = APP_ETHTYPE)
 	return frame
 
 def test_filtered_packets() -> eth_frame:
@@ -167,12 +167,13 @@ def test_filtered_packets() -> eth_frame:
 	if (random.randint(0,100) < 10):
 		ethtype = random.randbytes(2)
 	frame = eth_frame(dst = dst_mac, src = src_mac)
-	frame.random_body(ethtype = ethtype)
+	frame.set_payload(payload = app_utils.random_request_payload() , ethtype = APP_ETHTYPE)
 	return frame
 
 def simple_config(dst_mac : bytes(6) = DEFAULT_DEVICE_MAC) -> eth_frame:
 	frame = eth_frame(dst=dst_mac, src=b"\x00\xF0\x00\xFF\x00\xFF")
 	conf_pkt = conf_utils.config_payload()
 	frame.set_payload(payload = conf_pkt.raw(), ethtype = CONF_ETHTYPE)
-	cocotb.log.info(f"config : {conf_pkt}")
+	cocotb.log.info(f"config: {conf_pkt}\n{conf_pkt.raw().hex()}")
+	cocotb.log.info(f"{frame.raw().hex()}")
 	return frame

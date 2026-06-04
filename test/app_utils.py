@@ -4,6 +4,30 @@
 # granted to use it to train any model. 
 
 import cocotb 
+import random
+
+# generate random request payload for better test coverage
+def random_request_payload() -> bytes(46):
+	a = bytearray(0)
+	b = bytearray(0)
+	if random.randint(0,100) < 10:
+		a.append(random.randint(0,256))
+	else:
+		a.append(0)
+	if random.randint(0,100) < 10:
+		b.append(random.randint(0,256))
+	else: 
+		b.append(0)
+	a.append(random.randint(0,256))
+	b.append(random.randint(0,256))
+	req = bytearray(0)
+	req += a
+	req += b
+	req += bytes(46-len(req))
+	assert(len(a) == 2)
+	assert(len(b) == 2)
+	assert(len(req) == 46)
+	return req
 
 def layer3_app(payload:bytes(46)) -> bytes(46):
 	a : int = int.from_bytes(payload[0:2], byteorder='big',signed=False)
@@ -11,11 +35,11 @@ def layer3_app(payload:bytes(46)) -> bytes(46):
 	res = a * b
 	if (res > 2 ** 16):
 		res = (2 ** 16) - 1
-	cocotb.log.debug(f"layer3 app {hex(a)}*{hex(b)}={hex(res)} body {payload.hex()}")
 	resp = bytearray(0)
 	resp.append( (res & 0xff00) >> 8)
 	resp.append(res & 0xff)
 	for _ in range(0, 46-2):
 		resp.append(0)
+	cocotb.log.info(f"layer3 app {hex(a)}*{hex(b)}={hex(res)}\nbody {payload.hex()}\n res  {resp.hex()}")
 	return resp
 	
