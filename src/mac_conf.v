@@ -84,28 +84,26 @@ always @(posedge clk)
 	if (fsm_q == IDLE) cnt_q <= {PKT_DATA_CNT_W{1'b0}};
 	else cnt_q <= cnt_q + {{PKT_DATA_CNT_W-1{1'b0}}, 1'b1};
 
-localparam BUF_W     = PKT_DATA_W;
+localparam BUF_W = PKT_DATA_W;
 
 reg  [BUF_W-1:0] buff_q;
-wire [BUF_W-1:0] buff_pad;
-wire [BUF_W-1:0] swap_buff_pad;
-wire [BUF_W-1:0] swap_rst_conf_pad;
-wire [BUF_W-1:0] rst_conf_pad;
+wire [BUF_W-1:0] swap_buff;
+wire [BUF_W-1:0] swap_rst_conf;
+wire [BUF_W-1:0] rst_conf;
 
-assign rst_conf_pad = { DEFAULT_MAC, {4{1'bx}}, DEFAULT_VID , {7{1'bx}}, default_tx_phase_i}; 
-byteswap #(.W(BUF_W/8)) m_swap_rst_conf(.i(rst_conf_pad), .o(swap_rst_conf_pad));
+assign rst_conf = { DEFAULT_MAC, {4{1'bx}}, DEFAULT_VID , {7{1'bx}}, default_tx_phase_i}; 
+byteswap #(.W(BUF_W/8)) m_swap_rst_conf(.i(rst_conf), .o(swap_rst_conf));
 
 always @(posedge clk) 
 	if (~rst_n) 
-		buff_q <= swap_rst_conf_pad;
+		buff_q <= swap_rst_conf;
 	else if (fsm_q == CONF)
 		buff_q <= {data_i, buff_q[BUF_W-1:PHY_W]};
 	
-assign buff_pad = buff_q;	
-byteswap #(.W(BUF_W/8)) m_buff_swap(.i(buff_pad), .o(swap_buff_pad));
+byteswap #(.W(BUF_W/8)) m_buff_swap(.i(buff_q), .o(swap_buff));
 
-assign mac_addr_o      = swap_buff_pad[BUF_W-1-:MAC_W];
-assign vid_o           = swap_buff_pad[BUF_W-MAC_W+4-1-:VID_W];
-assign clk_phase_sel_o = swap_buff_pad[0];
+assign mac_addr_o      = swap_buff[BUF_W-1-:MAC_W];
+assign vid_o           = swap_buff[BUF_W-MAC_W+4-1-:VID_W];
+assign clk_phase_sel_o = swap_buff[0];
 
 endmodule
