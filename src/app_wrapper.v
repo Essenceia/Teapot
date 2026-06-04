@@ -43,13 +43,14 @@ localparam [PKT_DATA_CNT_W-1:0] PKT_DATA_CNT = PKT_DATA_CNT_VAL;
 [ multiplicacant (A) [15:0] ][ multiplier (B) [15:0] ][ padding [351:0] ]
 0                           15                       31               383
 */
-reg [PKT_DATA_W-1:0]   payload_q;
-reg [PKT_DATA_CNT_W-1:0] rx_cnt_q; 
+reg  [PKT_DATA_W-1:0]     payload_q;
+wire [PKT_DATA_W-1:0]     swap_payload;
+reg  [PKT_DATA_CNT_W-1:0] rx_cnt_q; 
 
 /* RX 
 rx fsm */
-localparam RX_IDLE = 2'b00; 
-localparam RX_DATA = 2'b01; 
+localparam RX_IDLE  = 2'b00; 
+localparam RX_DATA  = 2'b01; 
 localparam RX_READY = 2'b10;
 reg [1:0] rx_fsm_q;
 
@@ -70,7 +71,9 @@ always @(posedge clk)
 	else rx_cnt_q <= rx_cnt_q + {{PKT_DATA_CNT_W-1{1'b0}}, 1'b1}; 
 
 always @(posedge clk) 
-	if (rx_fsm_q == RX_DATA) payload_q <= {payload_q[PKT_DATA_W-PHY_W-1:0], data_i}; 
+	if (rx_fsm_q == RX_DATA) payload_q <= {data_i , payload_q[PKT_DATA_W-1:PHY_W]}; 
+
+byteswap #(.W(PKT_DATA_W/8)) m_swap_payload(.i(payload_q), .o(swap_payload));
 
 /* accelerator */
 wire [15:0] mul_res;
@@ -87,7 +90,7 @@ wire [15:0] mul_res;
  * be about as fast as simulating it anyways. */
 wire [15:0] mul_raw_carry, mul_raw;
 reg  [15:0] mul_res_q;
-assign {mul_raw_carry, mul_raw} = payload_q[31:16]* payload_q[15:0]; 
+assign {mul_raw_carry, mul_raw} = swap_payload[31:16]* swap_payload[15:0]; 
 // clamping
 always @(posedge clk) 
 	mul_res_q <= |mul_raw_carry ? {16{1'b1}} : mul_raw; 
@@ -99,13 +102,13 @@ assign mul_res = mul_res_q;
 bf16_mul_fast m_bf16_mul(
 	.clk(clk),
 
-	.sa_i(payload_q[31]),
-	.ea_i(payload_q[30:23]),
-	.ma_i(payload_q[22:16]),
+	.sa_i(swap_payload[31]),
+	.ea_i(swap_payload[30:23]),
+	.ma_i(swap_payload[22:16]),
 
-	.sb_i(payload_q[15]),
-	.eb_i(payload_q[14:7]),
-	.mb_i(payload_q[6:0]),
+	.sb_i(swap_payload[15]),
+	.eb_i(swap_payload[14:7]),
+	.mb_i(swap_payload[6:0]),
 
 	.s_o(mul_res[15]),
 	.e_o(mul_res[14:7]),
