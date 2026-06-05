@@ -1,4 +1,5 @@
 BIN_NAME=test
+DEFAULT_ETH=enp2s0
 SRC=$(wildcard *.c) $(wildcard *.h)
 
 .PHONY: build clean trace
@@ -11,6 +12,9 @@ build: ${SRC}
 trace: build 
 	strace ${BIN_NAME} ${ARGS}
 
+run: build
+	sudo ./${BIN_NAME} ${DEFAULT_ETH}
+ 
 clean:
 	rm -f ./${BIN_NAME}
 	rm -f ./vgcore*
