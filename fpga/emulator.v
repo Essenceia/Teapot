@@ -175,11 +175,6 @@ io_switch #(.W(4)) m_io_switch(
 	.pin_io({phy_rx_err_io, phy_rx_v_io, phy_rx_io})
 );
 
-(* MARK_DEBUG = "true" *) wire [1:0] debug_phy_tx;
-(* MARK_DEBUG = "true" *) wire       debug_phy_tx_v;
-assign debug_phy_tx_v = phy_tx_v_o;
-assign debug_phy_tx = phy_tx_o;
-
 assign phy_tx_o      = uo_out[1:0];
 assign phy_tx_v_o    = uo_out[2];
 assign tdo           = uo_out[3];

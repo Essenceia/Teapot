@@ -72,7 +72,7 @@ localparam BODY       = 4'd6;
 
 localparam ERR        = 4'd7; 
  
-reg [3:0] fsm_q;
+(* MARK_DEBUG = "true" *) reg [3:0] fsm_q;
 
 reg err_q; 
 reg fwd_q; // forward packet to higher level, not filted out
