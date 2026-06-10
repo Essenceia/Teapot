@@ -6,7 +6,6 @@ module emulator #(
 	parameter LED_W = 16
 )
 (
-	input wire clk_osc_i, /* 100 MHz on board oscillator */
    	output wire clk_phy_o, /* RMII ref clk 50MHz */
  
 	// PmodC
@@ -21,7 +20,11 @@ module emulator #(
 	output  wire        phy_tx_v_o,
 	
 	// Pmod B
-	inout  wire [PMOD_W-1:0] pin_io,
+	inout  wire [1:0]        phy_rx_io,
+	inout  wire              phy_rx_v_io,
+	inout  wire              phy_rx_err_io,
+	input wire               clk_osc_i, /* 50 MHz */
+	output wire              phy_rst_n_o,
 
 	// Pmod XADC
 	output wire [7:0] JXADC_o,
@@ -60,8 +63,8 @@ IBUF m_ibuf_clk(
 /* Step down clock from the 100MHz to the desired 50MHz, 
 PLL is totally overkill for such a trivial task */
 PLLE2_BASE #(
-   .CLKFBOUT_MULT(10),        
-   .CLKIN1_PERIOD(10.0),      
+   .CLKFBOUT_MULT(20),        
+   .CLKIN1_PERIOD(20.0),      
    .CLKOUT0_DIVIDE(20),
    .DIVCLK_DIVIDE(1)
 ) m_global_clk_pll (
@@ -165,11 +168,11 @@ assign ui_in[2]    = tdi;
 assign ui_in[6:3]  = 4'h0;
 assign ui_in[7]    = tx_phase_async;
 
-io_switch #(.W(8)) m_io_switch(
-	.dir_sel_i(uio_oe),
-	.data_out_i(uio_out),
-	.data_in_o(uio_in),
-	.pin_io(pin_io)
+io_switch #(.W(4)) m_io_switch(
+	.dir_sel_i(uio_oe[3:0]),
+	.data_out_i(uio_out[3:0]),
+	.data_in_o(uio_in[3:0]),
+	.pin_io({phy_rx_err_io, phy_rx_v_io, phy_rx_io})
 );
 
 (* MARK_DEBUG = "true" *) wire [1:0] debug_phy_tx;

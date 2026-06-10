@@ -33,7 +33,7 @@ generate
 			.O(data_in_o[i]),
 			.I(data_out_i[i]),
 			.IO(pin_io[i]),
-			.T(sel)
+			.T(sel[i])
 		); 
 	end
 endgenerate

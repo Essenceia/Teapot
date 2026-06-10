@@ -35,14 +35,14 @@ set_property -dict { PACKAGE_PIN J2   IOSTANDARD LVCMOS33 } [get_ports {phy_tx_v
 set_property -dict { PACKAGE_PIN G3   IOSTANDARD LVCMOS33 } [get_ports {clk_phy_o}];
 
 #Pmod Header JB
-set_property -dict { PACKAGE_PIN A14   IOSTANDARD LVCMOS33 } [get_ports {pin_io[0]}];
-set_property -dict { PACKAGE_PIN A16   IOSTANDARD LVCMOS33 } [get_ports {pin_io[1]}];
-set_property -dict { PACKAGE_PIN B15   IOSTANDARD LVCMOS33 } [get_ports {pin_io[2]}];
-set_property -dict { PACKAGE_PIN B16   IOSTANDARD LVCMOS33 } [get_ports {pin_io[3]}];
-set_property -dict { PACKAGE_PIN A15   IOSTANDARD LVCMOS33 } [get_ports {pin_io[4]}];
-set_property -dict { PACKAGE_PIN A17   IOSTANDARD LVCMOS33 } [get_ports {pin_io[5]}];
-set_property -dict { PACKAGE_PIN C15   IOSTANDARD LVCMOS33 } [get_ports {pin_io[6]}];
-set_property -dict { PACKAGE_PIN C16   IOSTANDARD LVCMOS33 } [get_ports {pin_io[7]}];
+set_property -dict { PACKAGE_PIN A14   IOSTANDARD LVCMOS33 } [get_ports {phy_rx_io[0]}];
+set_property -dict { PACKAGE_PIN A16   IOSTANDARD LVCMOS33 } [get_ports {phy_rx_io[1]}];
+set_property -dict { PACKAGE_PIN B15   IOSTANDARD LVCMOS33 } [get_ports {phy_rx_v_io}];
+set_property -dict { PACKAGE_PIN B16   IOSTANDARD LVCMOS33 } [get_ports {phy_rx_err_io}];
+#set_property -dict { PACKAGE_PIN A15   IOSTANDARD LVCMOS33 } [get_ports {pin_io[4]}];
+#set_property -dict { PACKAGE_PIN A17   IOSTANDARD LVCMOS33 } [get_ports {pin_io[5]}];
+#set_property -dict { PACKAGE_PIN C15   IOSTANDARD LVCMOS33 } [get_ports {pin_io[6]}];
+set_property -dict { PACKAGE_PIN C16   IOSTANDARD LVCMOS33 } [get_ports {phy_rst_n_o}];
 
 # Pmod Header JC
 # jtag
@@ -91,13 +91,14 @@ create_generated_clock -name $::env(OUTPUT_CLOCK) -source [get_pins -hier -regex
 
 # oscillator
 set osc_clk "clk_osc_i"
-set_property -dict { PACKAGE_PIN W5   IOSTANDARD LVCMOS33 } [get_ports $osc_clk]
-create_clock -add -name $osc_clk -period 10.00 -waveform {0 5} [get_ports $osc_clk]
-# pll
-set ::env(CLOCK_PORT) "clk"
-# clock creation infered by tools and pll params
+set_property -dict { PACKAGE_PIN C15   IOSTANDARD LVCMOS33 PULLDOWN true } [get_ports $osc_clk] 
+create_clock -add -name $osc_clk -period 20.00 -waveform {0 10} [get_ports $osc_clk]
+# pll clock creation infered by tools and pll params
 
 
-# set data delays
-set ::env(PHY_RX_PINS) [get_ports -regexp pin_io.*]
+# lan8720a configs
+set ::env(PHY_RX_PINS) [get_ports -regexp phy_rx.*]
 set ::env(PHY_TX_PINS) [get_ports -regexp phy_tx.*]
+set ::env(CLOCK_PORT) $osc_clk
+
+
