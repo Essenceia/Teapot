@@ -86,9 +86,7 @@ async def send_and_check_frames(dut,rx : eth_frame):
 				debug_string += "^" if (e != g) else " "
 			cocotb.log.error(debug_string)
 			assert(0)
-	# IPG, but shorter
-	await ClockCycles(dut.clk, random.randint(1, 10))
-	
+
 # Simple test 
 @cocotb.test()
 async def simple_rx_test(dut):

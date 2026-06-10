@@ -143,13 +143,20 @@ reg  [1:0] tx_fsm_q;
 reg  [FRAME_CNT_W-1:0] tx_cnt_q;
 wire [RES_W-1:0] swap_mul_res;
 reg  [RES_W-1:0] res_q;
- 
+
+localparam RESEND_CNT_W = 5; 
+reg [RESEND_CNT_W-1:0] debug_resend_cnt_q; 
+
+wire start_tx; 
+//assign start_tx = (rx_fsm_q == RX_READY) & ~data_err_i;
+assign start_tx = 1'b1; 
+	
 always @(posedge clk) begin
 	if (~rst_n) 
 		tx_fsm_q <= TX_IDLE; 
 	else begin
 		case(tx_fsm_q)
-			TX_IDLE   : tx_fsm_q <= (rx_fsm_q == RX_READY) & ~data_err_i? TX_CAPTURE: TX_IDLE;
+			TX_IDLE   : tx_fsm_q <= start_tx ? TX_CAPTURE: TX_IDLE;
 			TX_CAPTURE: tx_fsm_q <= TX_REQ;
 			TX_REQ    : tx_fsm_q <= mac_tx_acc_i? TX_STREAM: TX_REQ;
 		    TX_STREAM : tx_fsm_q <= (tx_cnt_q == FRAME_CNT) ? TX_IDLE: TX_STREAM;	

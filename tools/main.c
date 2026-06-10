@@ -81,7 +81,7 @@ int main(int argc, char * argv[]){
 			return -1;
 		}
 		if (i % 1000 == 0)printf("%04d message has sucesfully been sent\n", i);
-		usleep(150);
+		usleep(100);
 	}
 
 	//close(sock);
