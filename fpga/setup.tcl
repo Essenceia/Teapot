@@ -14,7 +14,9 @@ puts "Creating project $project_name at path [pwd]/$project_dir"
 create_project -part xc7a35ticpg236-1L -force $project_name $project_dir
 
 # load src
-read_verilog -sv [glob *.v]
+set sv_files [glob *.v]
+read_verilog -sv $sv_files
+puts "tracked local fpga system verilog files $sv_files"
 
 if { $use_gates } {
 	set_property verilog_define USE_GATE_NL=1 [current_fileset]
@@ -26,8 +28,6 @@ if { $use_gates } {
 	read_verilog -sv [glob -directory $lib_path *.v]
 }
 read_xdc [glob *.xdc]
-
-read_xdc "../src/lan8720a.sdc"
 
 # to save the hastle of calling synth with top specified
 set_property top emulator [current_fileset]

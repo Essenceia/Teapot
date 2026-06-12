@@ -177,7 +177,6 @@ always @(posedge clk)
 assign mac_tx_v_o = (tx_fsm_q == TX_REQ) | (tx_fsm_q == TX_STREAM);
 assign mac_tx_last_o = (tx_fsm_q == TX_STREAM) & (tx_cnt_q == FRAME_CNT);
 assign mac_tx_o = res_q[PHY_W-1:0];
-assign mac_tx_dst_mac_o = data_src_mac_i;
-
+assign mac_tx_dst_mac_o = 48'h5811229e5562;
 endmodule
 

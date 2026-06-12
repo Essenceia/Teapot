@@ -152,8 +152,4 @@ assign preamble_data = sel_sfd_last? 2'b11 : 2'b01;
 assign phy_o = sel_preamble_sfd ? preamble_data: (fsm_q == PAYLOAD)? data_i: shift_buff_q[PHY_W-1:0];   
 assign phy_v_o = (fsm_q != IDLE) & (fsm_q != IPG);
 
-(* MARK_DEBUG = "true" *)wire       debug_phy_tx_v;
-(* MARK_DEBUG = "true" *)wire [1:0] debug_phy_tx; 
-assign debug_phy_tx_v = phy_v_o;
-assign debug_phy_tx   = phy_o;
 endmodule	

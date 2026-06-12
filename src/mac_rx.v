@@ -75,7 +75,7 @@ localparam ERR        = 4'd7;
 (* MARK_DEBUG = "true" *) reg [3:0] fsm_q;
 
 reg err_q; 
-reg fwd_q; // forward packet to higher level, not filted out
+(* MARK_DEBUG = "true" *)reg fwd_q; // forward packet to higher level, not filted out
 
 wire ethtype_match;
 wire pkt_app;
@@ -101,7 +101,7 @@ wire            vid_match;
   
 wire [FCS_W-1:0] fcs;
 wire [FCS_W-1:0] fcs_early_unused;
-wire             fcs_err; 
+(*MARK_DEBUG = "true" *)wire             fcs_err; 
 wire eof; 
 
 // fsm 

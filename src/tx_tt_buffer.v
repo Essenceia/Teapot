@@ -54,7 +54,7 @@ gf180mcu_fd_sc_mcu7t5v0__mux2_2 m_ref_clk_mux(
 
 `else
 assign ref_clk_inv = ~ref_clk;
-assign inner_clk = clk_phase_sel_q ? ref_clk_inv: ref_clk; 
+assign inner_clk = ref_clk; 
 `endif
 
 
@@ -83,4 +83,10 @@ end
 
 assign tx_v_o = tx_v_q; 
 assign tx_o   = tx_q;
+
+(* MARK_DEBUG = "true" *) wire [1:0] debug_tx;
+(* MARK_DEBUG = "true" *) wire       debug_tx_v;
+assign debug_tx = tx_o; 
+assign debug_tx_v = tx_v_o;
+
 endmodule
