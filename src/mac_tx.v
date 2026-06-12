@@ -124,11 +124,10 @@ assign sel_src_mac = (fsm_q == DST_MAC) & (cnt_q == MAC_CNT);
 assign sel_ethtype = (fsm_q == SRC_MAC) & (cnt_q == MAC_CNT);
 assign sel_fcs     = (fsm_q == PAYLOAD) & data_last_i;
 
-wire [BUFF_W-1:0] swap_src_mac, swap_dst_mac, swap_ethertype, swap_fcs;
+wire [BUFF_W-1:0] swap_src_mac, swap_dst_mac, swap_ethertype;
 byteswap #(.W(BUFF_W/8)) m_swap_src_mac(.i(phy_mac_i),.o(swap_src_mac));
 byteswap #(.W(BUFF_W/8)) m_swap_dst_mac(.i(data_dst_mac_i),.o(swap_dst_mac));
 byteswap #(.W(BUFF_W/8)) m_swap_ethertype(.i({APP_ETHTYPE, {BUFF_W-ETHTYPE_W{1'bX}}}),.o(swap_ethertype));
-byteswap #(.W(BUFF_W/8)) m_swap_fcs(.i({fcs_early, {BUFF_W-FCS_W{1'bX}}}),.o(swap_fcs));
 
 // TODO add a onehot0 attribute if yosys doesn't catch it automatically 
 always @(posedge clk) begin
@@ -136,7 +135,7 @@ always @(posedge clk) begin
 		4'b0001: shift_buff_q <= swap_src_mac;
 		4'b0010: shift_buff_q <= swap_dst_mac;
 		4'b0100: shift_buff_q <= swap_ethertype;
-		4'b1000: shift_buff_q <= swap_fcs;
+		4'b1000: shift_buff_q <= {{BUFF_W-FCS_W{1'bX}}, fcs_early};
 		default: shift_buff_q <= {{PHY_W{1'bX}},shift_buff_q[BUFF_W-1:PHY_W]}; 
 	endcase
 end
