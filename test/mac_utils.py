@@ -130,10 +130,14 @@ async def read_tx_frame(dut) -> bytes:
 	while (dut.phy_tx_v.value == 1):
 		buff.append(dut.phy_tx.value)
 		await ClockCycles(dut.clk, 1)
+	cocotb.log.info(f"got len {len(buff)}/{(64+8)*4}") 
+	if (len(buff) != (64+8)*4):
+		cocotb.log.error(f"got len {len(buff)}") 
+		assert(0) 
 	return bitpair_to_bytes(buff)
 
 async def check_no_tx_frame(dut, timeout:int = 150) -> None:
-	for _ in range(0, timeout): 
+	for _ in range(0, timeout):
 		if (dut.phy_tx_v.value == 1):
 			cocotb.log.error("Error, unexpected tx response")
 			assert(0)
