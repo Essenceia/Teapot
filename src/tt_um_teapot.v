@@ -36,10 +36,10 @@ wire        data_rx_v;
 wire        data_rx_conf;
 wire        data_rx_start;
 wire        data_rx_err;
-wire [PHY_W-1:0]  data_rx;
+wire [PHY_W-1:0] data_rx;
 wire [MAC_W-1:0] data_rx_src_mac; 
 
-wire        rmii_tx_v; 
+wire             rmii_tx_v; 
 wire [PHY_W-1:0] rmii_tx;
 
 wire        mac_tx_v;
@@ -52,54 +52,33 @@ wire       mac_rx_err;
 wire       mac_rx_v;
 wire [PHY_W-1:0] mac_rx;
 
-
-(* MARK_DEBUG = "true" *) wire             phy_rx_v_io_in;
-(* MARK_DEBUG = "true" *) wire [PHY_W-1:0] phy_rx_io_in;
-(* MARK_DEBUG = "true" *) wire             phy_rx_err_in;
-
-wire             phy_rx_v_io_out;
-wire [PHY_W-1:0] phy_rx_io_out;
-
-wire       phy_rx_v_io_dir;
-wire [1:0] phy_rx_io_dir;
-wire       phy_rst_n;
-
 // IO
-wire [3:0] uio_in_unused;
-assign uio_oe[2:0]  = {phy_rx_v_io_dir, phy_rx_io_dir};
-assign uio_out[2:0] = {phy_rx_v_io_out, phy_rx_io_out};
-assign {phy_rx_v_io_in, phy_rx_io_in[1:0]} = uio_in[2:0];
-
-assign uio_oe[3]   = 1'b0;
-assign phy_rx_err_in   = uio_in[3];
-
-assign uio_oe[6:4]  = 3'd0;
-assign uio_out[6:3] = 4'd0;
-assign uio_in_unused = uio_in[7:4];
-
-assign uio_oe[7]   = 1'b1;
-assign uio_out[7]  = phy_rst_n;
+wire [7:0] uio_in_unused;
+assign uio_oe        = 8'd0;
+assign uio_out       = 8'd0;
+assign uio_in_unused = uio_in;
 
 // IN
-wire tck, tms, tdi; 
-wire [6:3] ui_unused;
+(* MARK_DEBUG = "true" *) wire             phy_rx_v;
+(* MARK_DEBUG = "true" *) wire [PHY_W-1:0] phy_rx;
+(* MARK_DEBUG = "true" *) wire             phy_rx_err;
+
+wire [2:0] ui_unused;
 wire default_tx_phase; 
 
-assign tck = ui_in[0];
-assign tms = ui_in[1];
-assign tdi = ui_in[2];
-assign ui_unused = ui_in[6:3];
+assign phy_rx     = ui_in[1:0];
+assign phy_rx_v   = ui_in[2];
+assign phy_rx_err = ui_in[3];
+assign ui_unused  = ui_in[6:4];
 assign default_tx_phase = ui_in[7]; 
 
 // OUT 
 wire [1:0] phy_tx;
 wire       phy_tx_v;
-wire       tdo; 
 
 assign uo_out[1:0] = phy_tx;
 assign uo_out[2]   = phy_tx_v;
-assign uo_out[3]   = tdo;
-assign uo_out[7:4] = 4'd0;
+assign uo_out[7:3] = 5'd0;
 
 // misc
 wire ena_unused; 
@@ -118,19 +97,12 @@ rmii m_rmii(
 
 	.clk_phase_sel_i(clk_phase_sel),
 
-	.phy_rst_n_o(phy_rst_n),
-
-	.phy_rx_v_dir_o(phy_rx_v_io_dir),
-	.phy_rx_dir_o(phy_rx_io_dir),
-	.phy_rx_v_o(phy_rx_v_io_out),
-	.phy_rx_o(phy_rx_io_out),
-
 	.phy_tx_v_o(phy_tx_v),
 	.phy_tx_o(phy_tx),
 
-	.phy_rx_v_i(phy_rx_v_io_in),
-	.phy_rx_i(phy_rx_io_in),
-	.phy_rx_err_i(phy_rx_err_in),
+	.phy_rx_v_i(phy_rx_v),
+	.phy_rx_i(phy_rx),
+	.phy_rx_err_i(phy_rx_err),
 
 	.mac_rx_v_o(mac_rx_v),
 	.mac_rx_o(mac_rx),
@@ -224,6 +196,4 @@ mac_tx #(
 	.phy_o(rmii_tx)
 );
 
-// jtag - TODO
-assign tdo = 1'b0;
 endmodule

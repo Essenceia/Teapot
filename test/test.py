@@ -32,23 +32,10 @@ def start_clk(dut):
 	clk_task = cocotb.start_soon(clock.start()) #runs the clock "in the background" 
 	return clk_task
 
-def start_jtag_clk(dut):
-	jtag_clk = Clock(dut.tck, TCK_PERIOD, TCK_UNIT)
-	cocotb.start_soon(jtag_clk.start())
-
 # Reset sequence
-async def rst(dut, ena=1, start_jtag=False, start_main_clk=True):
-	dut.rst_n.value = 1
-	dut.tck.value = 0
-	dut.tms.value = "X"
-	dut.tdi.value = "X"
-	clk_task = start_clk(dut)
-	if start_jtag:
-		dut.tms.value = 0
-		dut.tdi.value = 0
-		start_jtag_clk(dut)
-	await ClockCycles(dut.clk, 2)
+async def rst(dut, ena=1 ):
 	dut.rst_n.value = 0
+	clk_task = start_clk(dut)
 	await ClockCycles(dut.clk, 2)
 	# set default phy rx
 	dut.phy_rx_v.value = "0"
@@ -59,8 +46,6 @@ async def rst(dut, ena=1, start_jtag=False, start_main_clk=True):
 	dut.rst_n.value = 1
 	dut.ena.value = ena
 	await ClockCycles(dut.clk, 20)
-	if not(start_main_clk): 
-		assert(clk_task.cancel())
 
 # send only, used to test config frames where no response is expected
 async def send_frame(dut, rx: eth_frame):

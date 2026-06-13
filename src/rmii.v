@@ -14,12 +14,6 @@ module rmii(
 	input wire rst_n, 
 
 	input wire        clk_phase_sel_i,
-	// config
-	output wire       phy_rst_n_o, // latch config on rst release
-	output wire       phy_rx_v_dir_o, // CRS_DV dir, 0=input, 1=output
-	output wire [1:0] phy_rx_dir_o, // RX data dir, 0=input, 1=output
-	output wire       phy_rx_v_o, // config, MODE2
-	output wire [1:0] phy_rx_o, // config, MODE[1:0]
 
 	output wire       phy_tx_v_o, // transmit strobe
 	output wire [1:0] phy_tx_o,	
@@ -35,53 +29,6 @@ module rmii(
 	input wire        mac_tx_v_i,
 	input wire [1:0]  mac_tx_i
 );
-localparam  T_RST_IA = (100000 / 50); // rst input assert time: 100 us 
-localparam       RST_CNT_W = $clog2(T_RST_IA);
-localparam [RST_CNT_W-1:0] RST_CYCLES = {RST_CNT_W{1'b1}};
-localparam [RST_CNT_W-1:0] RST_RELEASE_CNT = {{RST_CNT_W-1{1'b0}}, 1'b1};
-
-localparam [2:0] CONF_MODE = 3'b011; // 100BASE-T full-duplex
-
-/* 
-Strap config sequence, give design a few cycles to wake up
-and for rst to propagate. 
-Release phy rst when rst counter reaches 1 and not 
-0 as we need to switch the rx CRS_DV pin direction 
-before starting normal operations.
-*/
-reg [RST_CNT_W-1:0] rst_cnt_q; 
-always @(posedge clk)
-	if( ~rst_n ) 
-		rst_cnt_q <= RST_CYCLES;
-	else if ( |rst_cnt_q )
-		rst_cnt_q <= rst_cnt_q - {{RST_CNT_W-1{1'b0}}, 1'b1};
-
-reg phy_rst_n_q;
-always @(posedge clk) 
-	if (~rst_n)
-		phy_rst_n_q <= 1'b0;
-	else if ( rst_cnt_q == RST_RELEASE_CNT ) 
-		phy_rst_n_q <= 1'b1;
-assign phy_rst_n_o = phy_rst_n_q;
-
-reg       phy_rx_v_dir_q;
-reg [1:0] phy_rx_dir_q;
-always @(posedge clk) 
-	if (~rst_n) 
-		{phy_rx_v_dir_q, phy_rx_dir_q} <= {3{1'b1}}; // outputs for config
-	else if ( phy_rst_n_q ) // hold config after rst deasserted, this is safe since conf sets valid = 0
-		{phy_rx_v_dir_q, phy_rx_dir_q} <= {3{1'b0}}; // configure as inputs
-assign phy_rx_v_dir_o = phy_rx_v_dir_q;
-assign phy_rx_dir_o   = phy_rx_dir_q;
-
-// MODE
-assign {phy_rx_v_o, phy_rx_o} = CONF_MODE;
-
-// implictly already set by wiring : 
-// PHYADDR0 = 0 
-// REGOFF = 0 (enabled) 
-// nINTSET = 1 (REF_CLK In mode) 
-
 // TX - adjust clk phase
 reg       mac_tx_v_q;
 reg [1:0] mac_tx_q;

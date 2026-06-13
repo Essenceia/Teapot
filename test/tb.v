@@ -21,16 +21,11 @@ module tb ();
 	wire rst_n;
 	wire ena;
 	
-	wire [7:0]  ui_in;
-	wire [7:0]  uio_in;
+	wire [7:0] ui_in;
+	wire [7:0] uio_in;
 	wire [7:0] uo_out;
 	wire [7:0] uio_out;
 	wire [7:0] uio_oe;
-
- 	wire tck; 
-	wire tms; 
-	wire tdi; 
-	wire tdo; 
 
 	// RX path
 	wire [1:0] phy_rx;
@@ -41,17 +36,12 @@ module tb ();
 	wire [1:0] phy_tx;
 	wire       phy_tx_v;
 
-	assign uio_in[1:0] = phy_rx;
-	assign uio_in[2]   = phy_rx_v;
-	assign uio_in[3]   = phy_rx_err;
+	assign ui_in[1:0] = phy_rx;
+	assign ui_in[2]   = phy_rx_v;
+	assign ui_in[3]   = phy_rx_err;
 
 	assign phy_tx      = uo_out[1:0];
 	assign phy_tx_v    = uo_out[2];
-
-	assign ui_in[0] = tck;
-	assign ui_in[1] = tms;
-	assign ui_in[2] = tdi;
-	assign tdo      = uo_out[3];
 
 	tt_um_teapot m_dut (
 		  .ui_in  (ui_in),    // Dedicated inputs
