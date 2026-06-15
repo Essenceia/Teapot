@@ -141,9 +141,9 @@ async def check_no_tx_frame(dut, timeout:int = 150) -> None:
 		await ClockCycles(dut.clk, 1)
 		
 # { expect result boolean, result }
-def expected_response(req: eth_frame) -> tuple[bool, eth_frame]:
+def expected_response(req: eth_frame, device_mac : bytes(6) = DEFAULT_DEVICE_MAC) -> tuple[bool, eth_frame]:
 	tx_sent = False
-	if (req.header.dst == DEFAULT_DEVICE_MAC) and(req.header.ethtype == APP_ETHTYPE): 
+	if (req.header.dst == device_mac) and(req.header.ethtype == APP_ETHTYPE): 
 		tx_sent = True
 	if req.header.vlan_tag is not None: 	
 		if (req.header.vlan_tag.tci & VID_MASK) != DEFAULT_VID:
@@ -158,9 +158,8 @@ def simple_frame() -> eth_frame:
 	frame.set_payload(payload = app_utils.random_request_payload() , ethtype = APP_ETHTYPE)
 	return frame
 
-def test_filtered_packets() -> eth_frame:
+def test_filtered_packets(dst_mac: bytes(6) = DEFAULT_DEVICE_MAC ) -> eth_frame:
 	accepted_pkt = simple_frame()
-	dst_mac = DEFAULT_DEVICE_MAC
 	src_mac = random.randbytes(6)
 	ethtype = APP_ETHTYPE
 	if (random.randint(0,100) < 10):
@@ -171,9 +170,10 @@ def test_filtered_packets() -> eth_frame:
 	frame.set_payload(payload = app_utils.random_request_payload() , ethtype = APP_ETHTYPE)
 	return frame
 
-def simple_config(dst_mac : bytes(6) = DEFAULT_DEVICE_MAC) -> eth_frame:
+def simple_config(dst_mac : bytes(6) = DEFAULT_DEVICE_MAC, new_mac: bytes(6) = random.randbytes(6)) -> eth_frame:
 	frame = eth_frame(dst=dst_mac, src=b"\x00\xF0\x00\xFF\x00\xFF")
 	conf_pkt = conf_utils.config_payload()
+	conf_pkt.addr = new_mac
 	frame.set_payload(payload = conf_pkt.raw(), ethtype = CONF_ETHTYPE)
 	cocotb.log.info(f"config: {conf_pkt}\n{conf_pkt.raw().hex()}")
 	cocotb.log.info(f"{frame.raw().hex()}")

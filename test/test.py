@@ -52,8 +52,8 @@ async def rst(dut, ena=1 ):
 async def send_frame(dut, rx: mac_utils.eth_frame):
 	await mac_utils.phy_stream_frame(dut, rx.raw())
 
-async def send_and_check_frames(dut, rx: mac_utils.eth_frame):
-	tx_sent, tx = mac_utils.expected_response(rx)
+async def send_and_check_frames(dut, rx: mac_utils.eth_frame, device_mac = mac_utils.DEFAULT_DEVICE_MAC):
+	tx_sent, tx = mac_utils.expected_response(rx, device_mac)
 	if tx_sent: 
 		read_tx_thread = cocotb.start_soon(mac_utils.read_tx_frame(dut))
 	else:
@@ -94,5 +94,18 @@ async def filter_rx_test(dut):
 async def update_eth_config(dut):
 	random.seed(0)
 	await rst(dut)
-	await send_frame(dut, mac_utils.simple_config())
+	await send_frame(dut, mac_utils.simple_config(new_mac = random.randbytes(6)))
 	await ClockCycles(dut.clk, 10)
+
+@cocotb.test()
+async def update_mac_check_filter(dut):
+	random.seed(0)
+	await rst(dut)
+	device_mac = mac_utils.DEFAULT_DEVICE_MAC
+	for _ in range(0, 10):
+		new_mac = random.randbytes(6) 
+		await send_frame(dut, mac_utils.simple_config(dst_mac = device_mac, new_mac = new_mac))
+		device_mac = new_mac 
+		await send_and_check_frames(dut, mac_utils.test_filtered_packets(dst_mac = device_mac), device_mac = device_mac)	
+	await ClockCycles(dut.clk, 10)
+
