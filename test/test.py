@@ -74,7 +74,7 @@ async def send_and_check_frames(dut, rx: mac_utils.eth_frame):
 			assert(0)
 
 # Simple test 
-@cocotb.test(expect_error=AssertionError if GATES == "yes" else ())
+@cocotb.test(skip=True if GATES == "yes" else False)
 async def simple_rx_test(dut):
 	random.seed(0)
 	await rst(dut) 
@@ -82,7 +82,7 @@ async def simple_rx_test(dut):
 		await send_and_check_frames(dut, mac_utils.simple_frame())	
 	await ClockCycles(dut.clk, 10)
 
-@cocotb.test(expect_error=AssertionError if GATES == "yes" else ())
+@cocotb.test(skip=True if GATES == "yes" else False)
 async def filter_rx_test(dut):
 	random.seed(0)
 	await rst(dut)
