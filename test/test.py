@@ -74,7 +74,7 @@ async def send_and_check_frames(dut, rx: mac_utils.eth_frame, device_mac = mac_u
 			assert(0)
 
 # Simple test 
-@cocotb.test(skip=True if GATES == "yes" else False)
+@cocotb.test(expect_error=AssertionError if GATES == "yes" else ())
 async def simple_rx_test(dut):
 	random.seed(0)
 	await rst(dut) 
@@ -82,7 +82,7 @@ async def simple_rx_test(dut):
 		await send_and_check_frames(dut, mac_utils.simple_frame())	
 	await ClockCycles(dut.clk, 10)
 
-@cocotb.test(skip=True if GATES == "yes" else False)
+@cocotb.test(expect_error=AssertionError if GATES == "yes" else ())
 async def filter_rx_test(dut):
 	random.seed(0)
 	await rst(dut)
@@ -106,7 +106,7 @@ async def update_eth_config(dut):
 		device_mac = new_mac
 	await ClockCycles(dut.clk, 10)
 
-@cocotb.test(skip=True if GATES == "yes" else False)
+@cocotb.test(expect_error=AssertionError if GATES == "yes" else ())
 async def update_mac_check_filter(dut):
 	random.seed(0)
 	await rst(dut)
