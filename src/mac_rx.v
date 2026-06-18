@@ -146,7 +146,8 @@ assign frame_start = swap_buff[SFD_W-1:0] == SFD;
 
 // filter out packets that don't match our MAC address (or multicast)
 always @(posedge clk)
-	if ((frame_start & fsm_q == DETECT_SFD) 
+	if ( ~rst_n 
+       | (frame_start & fsm_q == DETECT_SFD) 
        | (((fsm_q == SRC_MAC) | (fsm_q == DST_MAC)) & cnt_q[ADDR_CNT_W-1:0] == ADDR_CNT) 
        | (((fsm_q == PKT_TYPE) | (fsm_q == VLAN)) & cnt_q[FRAME_TYPE_CNT_W-1:0] == FRAME_TYPE_CNT)) 
 		cnt_q <= {CNT_W{1'b0}};
@@ -174,7 +175,9 @@ always @(posedge clk)
 
 // forward 
 always @(posedge clk) 
-	if ((fsm_q == DST_MAC) & (cnt_q[ADDR_CNT_W-1:0] == ADDR_CNT)) 
+	if (~rst_n) 
+		fwd_q <= 1'b0;
+	else if ((fsm_q == DST_MAC) & (cnt_q[ADDR_CNT_W-1:0] == ADDR_CNT)) 
 		fwd_q       <= dst_addr_match;
 	else if ((fsm_q == VLAN) & (cnt_q[FRAME_TYPE_CNT_W-1:0] == FRAME_TYPE_CNT))
 		fwd_q <= fwd_q & vid_match;
