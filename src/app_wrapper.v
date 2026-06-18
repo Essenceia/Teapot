@@ -98,10 +98,10 @@ always @(posedge clk)
 assign mul_res = mul_res_q; 
  
 `else
+wire [15:0] mul_res_next;
+reg  [15:0] mul_res_q; 
 
-bf16_mul_fast m_bf16_mul(
-	.clk(clk),
-
+bf16_mul m_bf16_mul(
 	.sa_i(swap_payload[31]),
 	.ea_i(swap_payload[30:23]),
 	.ma_i(swap_payload[22:16]),
@@ -110,11 +110,15 @@ bf16_mul_fast m_bf16_mul(
 	.eb_i(swap_payload[14:7]),
 	.mb_i(swap_payload[6:0]),
 
-	.s_o(mul_res[15]),
-	.e_o(mul_res[14:7]),
-	.m_o(mul_res[6:0])
+	.s_o(mul_res_next[15]),
+	.e_o(mul_res_next[14:7]),
+	.m_o(mul_res_next[6:0])
 );
 
+always @(posedge clk) 
+	mul_res_q <= mul_res_next; 
+
+assign mul_res = mul_res_q; 
 `endif // COCOTB
 
 /* TX 
