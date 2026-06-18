@@ -43,7 +43,7 @@ async def rst(dut, ena=1 ):
 	dut.phy_rx.value = "X"*2
 	dut.phy_rx_err.value = "X"
 	dut.ena.value = 0
-	await ClockCycles(dut.clk, 10)
+	await ClockCycles(dut.clk, 30)
 	dut.rst_n.value = 1
 	dut.ena.value = ena
 	await ClockCycles(dut.clk, 20)
@@ -74,7 +74,8 @@ async def send_and_check_frames(dut, rx: mac_utils.eth_frame, device_mac = mac_u
 			assert(0)
 
 # Simple test 
-@cocotb.test(skip=True if GATES == "yes" else False)
+#@cocotb.test(skip=True if GATES == "yes" else False)
+@cocotb.test()
 async def simple_rx_test(dut):
 	random.seed(0)
 	await rst(dut) 
@@ -90,7 +91,7 @@ async def filter_rx_test(dut):
 		await send_and_check_frames(dut, mac_utils.test_filtered_packets())
 	await ClockCycles(dut.clk, 10)
 
-@cocotb.test()
+@cocotb.test(skip=True if GATES == "yes" else False)
 async def update_eth_config(dut):
 	random.seed(0)
 	await rst(dut)
@@ -113,7 +114,8 @@ async def update_mac_check_filter(dut):
 	device_mac = mac_utils.DEFAULT_DEVICE_MAC
 	for _ in range(0, 10):
 		new_mac = random.randbytes(6) 
-		await send_frame(dut, mac_utils.simple_config(dst_mac = device_mac, new_mac = new_mac))
+		frame,config = mac_utils.simple_config(dst_mac = device_mac, new_mac = new_mac)
+		await send_frame(dut, rx = frame)
 		device_mac = new_mac 
 		await send_and_check_frames(dut, mac_utils.test_filtered_packets(dst_mac = device_mac), device_mac = device_mac)	
 	await ClockCycles(dut.clk, 10)
