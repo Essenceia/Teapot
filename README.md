@@ -124,10 +124,7 @@ List of potenciel future improvements :
 
 ## Coffee-shop Chip family 
 
-This ASIC is part of a larger family of open-source Ethernet connected IP featuring: 
-- [`coffeepot` first generation switch.](https://github.com/Essenceia/ethernet_switch_asic)
-- [`teapot` Ethernet wrapper for building network connected accelerators (this repo).](https://github.com/Essenceia/Teapot)
-- [`coldbrew` Ethernet connected beacon for broadcasting an ethernet frame with an uptime count until the heat death of the universe (this repo).](https://github.com/Essenceia/Until_Heat_Death_Do_Us_Part)
+This ASIC is part of a larger project to build fully open-source Ethernet equipement called the [Coffee-shop project](https://github.com/Essenceia/Coffee_Shop_Project).
 
 ## Credits
 
